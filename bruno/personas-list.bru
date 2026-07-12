@@ -1,0 +1,23 @@
+meta {
+  name: Personas - List
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/customers/:customerId/personas
+  body: none
+  auth: bearer
+}
+
+params:path {
+  customerId: paste-a-customer-id-here
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+assert {
+  res.status: eq 200
+}

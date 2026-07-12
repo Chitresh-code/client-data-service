@@ -1,0 +1,29 @@
+meta {
+  name: Customers - Update
+  type: http
+  seq: 6
+}
+
+patch {
+  url: {{baseUrl}}/customers/:id
+  body: json
+  auth: bearer
+}
+
+params:path {
+  id: paste-a-customer-id-here
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "status": "active"
+  }
+}
+
+assert {
+  res.status: eq 200
+}

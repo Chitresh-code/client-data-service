@@ -1,0 +1,19 @@
+meta {
+  name: Customers - List
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/customers
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+assert {
+  res.status: eq 200
+}
