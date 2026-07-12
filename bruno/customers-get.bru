@@ -1,0 +1,23 @@
+meta {
+  name: Customers - Get One
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/customers/:id
+  body: none
+  auth: bearer
+}
+
+params:path {
+  id: paste-a-customer-id-here
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+assert {
+  res.status: eq 200
+}

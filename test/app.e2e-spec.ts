@@ -30,8 +30,32 @@ describe('Health (e2e)', () => {
   it('/health/ready (GET) confirms the database connection is up', () => {
     return request(app.getHttpServer()).get('/health/ready').expect(200);
   });
+});
 
-  // ponytail: JwtAuthGuard is wired globally with @Public() escaping health, but there's
-  // no protected route yet to assert 401 against -- add that assertion alongside the
-  // first real domain endpoint.
+describe('Customers (e2e)', () => {
+  let app: INestApplication<App>;
+
+  beforeAll(async () => {
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+
+    app = moduleFixture.createNestApplication();
+    await app.init();
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  it('/customers (GET) requires a token', () => {
+    return request(app.getHttpServer()).get('/customers').expect(401);
+  });
+
+  it('/customers (POST) requires a token', () => {
+    return request(app.getHttpServer())
+      .post('/customers')
+      .send({ name: 'Acme Corp' })
+      .expect(401);
+  });
 });

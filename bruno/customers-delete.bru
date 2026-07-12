@@ -1,0 +1,23 @@
+meta {
+  name: Customers - Delete
+  type: http
+  seq: 7
+}
+
+delete {
+  url: {{baseUrl}}/customers/:id
+  body: none
+  auth: bearer
+}
+
+params:path {
+  id: paste-a-customer-id-here
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+assert {
+  res.status: eq 204
+}

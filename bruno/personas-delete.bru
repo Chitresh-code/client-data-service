@@ -1,0 +1,24 @@
+meta {
+  name: Personas - Delete
+  type: http
+  seq: 11
+}
+
+delete {
+  url: {{baseUrl}}/customers/:customerId/personas/:id
+  body: none
+  auth: bearer
+}
+
+params:path {
+  customerId: paste-a-customer-id-here
+  id: paste-a-persona-id-here
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+assert {
+  res.status: eq 204
+}

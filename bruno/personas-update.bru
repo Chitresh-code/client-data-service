@@ -1,0 +1,30 @@
+meta {
+  name: Personas - Update
+  type: http
+  seq: 10
+}
+
+patch {
+  url: {{baseUrl}}/customers/:customerId/personas/:id
+  body: json
+  auth: bearer
+}
+
+params:path {
+  customerId: paste-a-customer-id-here
+  id: paste-a-persona-id-here
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "title": "Chief Technology Officer"
+  }
+}
+
+assert {
+  res.status: eq 200
+}

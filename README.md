@@ -12,7 +12,7 @@ auth/identity (identity-service), LLM briefing generation (briefing-service).
 ```bash
 npm install
 cp .env.example .env   # fill in DB credentials + identity-service JWKS URL
-npm run migration:run  # once migrations exist
+npm run migration:run
 npm run start:dev
 ```
 
@@ -39,8 +39,10 @@ Swagger UI at `/docs`, only enabled when `NODE_ENV` is `local` or `staging`.
 - [x] NestJS service scaffold — TypeORM + Postgres, JWKS-based auth guard, rate
       limiting, structured JSON logging (`nestjs-pino`), Terminus health checks,
       global validation + exception filter, Swagger gated to local/staging.
-- [ ] Customer/persona domain model
-- [ ] CRUD API + first real bruno requests beyond health
+- [x] Customer/persona domain model — `Customer` (name, domain, industry,
+      employeeCount, status) and `Persona` (name, email, title), one-to-many.
+- [x] CRUD API + first real bruno requests beyond health — `/customers` and
+      `/customers/:customerId/personas`, all requiring a Bearer token.
 
 ## Conventions
 
