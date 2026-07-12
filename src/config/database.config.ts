@@ -6,4 +6,8 @@ export default registerAs('database', () => ({
   username: process.env.DB_USERNAME,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
+  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
+  // Serverless: cap the pool so many concurrent warm instances don't exhaust
+  // Postgres's connection limit (mirrors identity-service's pkg/store/postgres.go).
+  extra: { max: 5 },
 }));
