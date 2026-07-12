@@ -12,6 +12,7 @@ export const validationSchema = Joi.object({
   DB_USERNAME: Joi.string().required(),
   DB_PASSWORD: Joi.string().allow('').default(''),
   DB_NAME: Joi.string().required(),
+  DB_SSL: Joi.boolean().default(false),
 
   AUTH_JWKS_URI: Joi.string().uri().required(),
   AUTH_ISSUER: Joi.string().uri().required(),
