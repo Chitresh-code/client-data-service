@@ -1,0 +1,21 @@
+meta {
+  name: Health - Liveness
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/health/live
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.status: eq ok
+}
+
+docs {
+  Public, no dependency checks -- just confirms the process is up. Kubernetes-style
+  liveness probe; a slow database shouldn't fail this.
+}
