@@ -1,6 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import type { JwtPayload } from '../auth/jwt.strategy';
 import { CustomersService } from './customers.service';
 import { Customer, CustomerStatus } from './entities/customer.entity';
 
@@ -16,6 +17,26 @@ interface MockCustomerRepo {
   remove: jest.Mock;
 }
 
+const leadCaller: JwtPayload = {
+  sub: 'lead-1',
+  iss: 'x',
+  exp: 0,
+  role: 'lead',
+};
+const appCaller: JwtPayload = { sub: 'app-1', iss: 'x', exp: 0 };
+const ownerCaller: JwtPayload = {
+  sub: 'rep-1',
+  iss: 'x',
+  exp: 0,
+  role: 'member',
+};
+const otherMemberCaller: JwtPayload = {
+  sub: 'rep-2',
+  iss: 'x',
+  exp: 0,
+  role: 'member',
+};
+
 describe('CustomersService', () => {
   let service: CustomersService;
   let repo: MockCustomerRepo;
@@ -27,6 +48,7 @@ describe('CustomersService', () => {
     industry: null,
     employeeCount: null,
     status: CustomerStatus.PROSPECT,
+    assignedRep: 'rep-1',
     personas: [],
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -64,16 +86,64 @@ describe('CustomersService', () => {
     expect(result).toEqual(customer);
   });
 
-  it('returns a customer by id', async () => {
-    repo.findOneBy.mockResolvedValue(customer);
+  describe('findAll', () => {
+    it('does not filter for a lead', async () => {
+      repo.find.mockResolvedValue([customer]);
 
-    await expect(service.findOne('1')).resolves.toEqual(customer);
+      await service.findAll(leadCaller);
+
+      expect(repo.find).toHaveBeenCalledWith();
+    });
+
+    it('does not filter for an application token (no role claim)', async () => {
+      repo.find.mockResolvedValue([customer]);
+
+      await service.findAll(appCaller);
+
+      expect(repo.find).toHaveBeenCalledWith();
+    });
+
+    it('filters by assignedRep for a member', async () => {
+      repo.find.mockResolvedValue([customer]);
+
+      await service.findAll(ownerCaller);
+
+      expect(repo.find).toHaveBeenCalledWith({
+        where: { assignedRep: 'rep-1' },
+      });
+    });
   });
 
-  it('throws NotFoundException when the customer does not exist', async () => {
-    repo.findOneBy.mockResolvedValue(null);
+  describe('findOne', () => {
+    it('returns a customer by id for a lead', async () => {
+      repo.findOneBy.mockResolvedValue(customer);
 
-    await expect(service.findOne('missing')).rejects.toThrow(NotFoundException);
+      await expect(service.findOne('1', leadCaller)).resolves.toEqual(customer);
+    });
+
+    it('returns a customer by id for its assigned member', async () => {
+      repo.findOneBy.mockResolvedValue(customer);
+
+      await expect(service.findOne('1', ownerCaller)).resolves.toEqual(
+        customer,
+      );
+    });
+
+    it('throws NotFoundException when the customer does not exist', async () => {
+      repo.findOneBy.mockResolvedValue(null);
+
+      await expect(service.findOne('missing', leadCaller)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('throws NotFoundException when a member requests a customer assigned to someone else', async () => {
+      repo.findOneBy.mockResolvedValue(customer);
+
+      await expect(service.findOne('1', otherMemberCaller)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
   });
 
   it('merges and saves on update', async () => {
@@ -82,7 +152,7 @@ describe('CustomersService', () => {
     repo.merge.mockReturnValue(updated);
     repo.save.mockResolvedValue(updated);
 
-    const result = await service.update('1', { name: 'Acme Corp' });
+    const result = await service.update('1', { name: 'Acme Corp' }, leadCaller);
 
     expect(repo.merge).toHaveBeenCalledWith(customer, { name: 'Acme Corp' });
     expect(result).toEqual(updated);
@@ -91,15 +161,23 @@ describe('CustomersService', () => {
   it('throws NotFoundException on update when the customer does not exist', async () => {
     repo.findOneBy.mockResolvedValue(null);
 
-    await expect(service.update('missing', { name: 'x' })).rejects.toThrow(
-      NotFoundException,
-    );
+    await expect(
+      service.update('missing', { name: 'x' }, leadCaller),
+    ).rejects.toThrow(NotFoundException);
+  });
+
+  it('throws NotFoundException on update when a member does not own the customer', async () => {
+    repo.findOneBy.mockResolvedValue(customer);
+
+    await expect(
+      service.update('1', { name: 'x' }, otherMemberCaller),
+    ).rejects.toThrow(NotFoundException);
   });
 
   it('removes an existing customer', async () => {
     repo.findOneBy.mockResolvedValue(customer);
 
-    await service.remove('1');
+    await service.remove('1', leadCaller);
 
     expect(repo.remove).toHaveBeenCalledWith(customer);
   });

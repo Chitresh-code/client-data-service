@@ -17,3 +17,11 @@ auth:bearer {
 assert {
   res.status: eq 200
 }
+
+docs {
+  RBAC: if {{authToken}} is a user token (identity-service's POST
+  /auth/exchange, has a "role" claim) with role "member", this returns only
+  customers whose assignedRep matches that user's sub. role "lead", or an
+  application token (POST /token, no role claim at all -- e.g.
+  briefing-service today), returns everything unfiltered.
+}

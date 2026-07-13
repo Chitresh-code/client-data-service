@@ -27,3 +27,9 @@ body:json {
 assert {
   res.status: eq 200
 }
+
+docs {
+  Also accepts assignedRep (an identity-service user id, uuid) -- e.g.
+  {"assignedRep": "paste-a-user-id-here"}. No dedicated assignment endpoint
+  in v1; this is the only way an account gets assigned to a rep.
+}
