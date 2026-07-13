@@ -21,3 +21,10 @@ auth:bearer {
 assert {
   res.status: eq 200
 }
+
+docs {
+  RBAC: a "member" token requesting a customer not assigned to them gets 404,
+  same as a genuinely nonexistent id -- not 403, so this doesn't confirm or
+  deny another rep's account exists. See Customers - List's docs for the
+  general filtering rule.
+}

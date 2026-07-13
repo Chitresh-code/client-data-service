@@ -8,6 +8,10 @@ export interface JwtPayload {
   sub: string;
   iss: string;
   exp: number;
+  // Present only on end-user tokens (identity-service's POST /auth/exchange),
+  // absent on application tokens (POST /token). "member" | "lead" in
+  // practice, kept as string here since this is just the transport shape.
+  role?: string;
   [claim: string]: unknown;
 }
 

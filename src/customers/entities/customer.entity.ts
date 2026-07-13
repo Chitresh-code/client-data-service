@@ -38,6 +38,13 @@ export class Customer {
   })
   status: CustomerStatus;
 
+  // identity-service user id of the rep this account is assigned to. Not a
+  // foreign key -- identity-service owns that table, not this one. A member
+  // (see JwtPayload.role) only sees customers where this matches their own
+  // sub; a lead sees everything regardless.
+  @Column({ name: 'assigned_rep', type: 'uuid', nullable: true })
+  assignedRep: string | null;
+
   @OneToMany(() => Persona, (persona) => persona.customer)
   personas: Persona[];
 

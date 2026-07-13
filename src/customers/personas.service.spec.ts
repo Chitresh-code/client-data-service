@@ -1,6 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import type { JwtPayload } from '../auth/jwt.strategy';
 import { CustomersService } from './customers.service';
 import { Customer, CustomerStatus } from './entities/customer.entity';
 import { Persona } from './entities/persona.entity';
@@ -21,6 +22,13 @@ interface MockCustomersService {
   findOne: jest.Mock;
 }
 
+const leadCaller: JwtPayload = {
+  sub: 'lead-1',
+  iss: 'x',
+  exp: 0,
+  role: 'lead',
+};
+
 describe('PersonasService', () => {
   let service: PersonasService;
   let repo: MockPersonaRepo;
@@ -33,6 +41,7 @@ describe('PersonasService', () => {
     industry: null,
     employeeCount: null,
     status: CustomerStatus.PROSPECT,
+    assignedRep: null,
     personas: [],
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -81,9 +90,13 @@ describe('PersonasService', () => {
     repo.create.mockReturnValue(persona);
     repo.save.mockResolvedValue(persona);
 
-    const result = await service.create(customer.id, { name: 'Jane' });
+    const result = await service.create(
+      customer.id,
+      { name: 'Jane' },
+      leadCaller,
+    );
 
-    expect(customers.findOne).toHaveBeenCalledWith(customer.id);
+    expect(customers.findOne).toHaveBeenCalledWith(customer.id, leadCaller);
     expect(repo.create).toHaveBeenCalledWith({
       name: 'Jane',
       customerId: customer.id,
@@ -94,24 +107,35 @@ describe('PersonasService', () => {
   it('propagates NotFoundException when the customer does not exist', async () => {
     customers.findOne.mockRejectedValue(new NotFoundException());
 
-    await expect(service.create('missing', { name: 'Jane' })).rejects.toThrow(
-      NotFoundException,
-    );
+    await expect(
+      service.create('missing', { name: 'Jane' }, leadCaller),
+    ).rejects.toThrow(NotFoundException);
     expect(repo.create).not.toHaveBeenCalled();
   });
 
-  it('throws NotFoundException when the persona does not exist for the customer', async () => {
-    repo.findOneBy.mockResolvedValue(null);
+  it('propagates NotFoundException from findAll when the caller cannot access the customer', async () => {
+    customers.findOne.mockRejectedValue(new NotFoundException());
 
-    await expect(service.findOne(customer.id, 'missing')).rejects.toThrow(
+    await expect(service.findAll('missing', leadCaller)).rejects.toThrow(
       NotFoundException,
     );
+    expect(repo.find).not.toHaveBeenCalled();
+  });
+
+  it('throws NotFoundException when the persona does not exist for the customer', async () => {
+    customers.findOne.mockResolvedValue(customer);
+    repo.findOneBy.mockResolvedValue(null);
+
+    await expect(
+      service.findOne(customer.id, 'missing', leadCaller),
+    ).rejects.toThrow(NotFoundException);
   });
 
   it('removes an existing persona', async () => {
+    customers.findOne.mockResolvedValue(customer);
     repo.findOneBy.mockResolvedValue(persona);
 
-    await service.remove(customer.id, '1');
+    await service.remove(customer.id, '1', leadCaller);
 
     expect(repo.remove).toHaveBeenCalledWith(persona);
   });

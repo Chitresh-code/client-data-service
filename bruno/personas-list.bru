@@ -21,3 +21,11 @@ auth:bearer {
 assert {
   res.status: eq 200
 }
+
+docs {
+  RBAC: every personas endpoint checks the parent customer via the same
+  scoping as Customers - Get One first -- a "member" token requesting
+  personas for a customerId they don't own gets 404 (also true if
+  customerId doesn't exist at all). See Customers - List's docs for the
+  general filtering rule.
+}
